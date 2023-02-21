@@ -1,21 +1,68 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Animated, PanResponder, View } from 'react-native';
+import styled from 'styled-components/native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+	const panResponder = useRef(
+		PanResponder.create({
+			onStartShouldSetPanResponder: () => true,
+			onPanResponderMove: (_, { dx }) => {
+				position.setValue(dx);
+			},
+			onPanResponderGrant: () => onPressIn(),
+			onPanResponderRelease: () => {
+				Animated.parallel([
+					onPressOut,
+					Animated.spring(position, {
+						toValue: 0,
+						useNativeDriver: true,
+					}),
+				]).start();
+			},
+		})
+	).current;
+	const scale = useRef(new Animated.Value(1)).current;
+	const position = useRef(new Animated.Value(0)).current;
+
+	const onPressIn = () =>
+		Animated.spring(scale, {
+			toValue: 0.95,
+			useNativeDriver: true,
+		}).start();
+
+	const onPressOut = Animated.spring(scale, {
+		toValue: 1,
+		useNativeDriver: true,
+	});
+
+	return (
+		<Container>
+			<Card
+				{...panResponder.panHandlers}
+				style={{
+					transform: [{ scale }, { translateX: position }],
+				}}
+			>
+				<Ionicons name="pizza" color="#192a56" size={98} />
+			</Card>
+		</Container>
+	);
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const Container = styled.View`
+	flex: 1;
+	justify-content: center;
+	align-items: center;
+	background-color: #00a8ff;
+`;
+
+const Card = styled(Animated.createAnimatedComponent(View))`
+	width: 200px;
+	height: 200px;
+	justify-content: center;
+	align-items: center;
+	border-radius: 12px;
+	box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);
+	background-color: #fff;
+`;
